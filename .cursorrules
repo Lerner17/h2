@@ -1,0 +1,58 @@
+# Architecture Rules for AI Agents (Adapted for This Repo)
+
+## Scope
+This repository is a **single-domain project** focused on Hysteria VPN management.
+Use the same DDD principles from the larger project, but adapted to one module.
+
+Primary module:
+- `internal/hysteria/`
+
+## Directory Structure (Current)
+
+```
+internal/
+├── config/                    # Environment config loader (platform-level)
+├── di/                        # Wire composition root
+└── hysteria/
+    ├── app/                   # Use cases + ports (interfaces)
+    ├── domain/                # Domain entities and domain errors
+    ├── delivery/http/         # Echo handlers and HTTP server wiring
+    └── infra/
+        ├── configrepo/        # Hysteria config.yaml repository
+        └── servicectl/        # Service restart adapter (systemctl/service/brew)
+```
+
+## Core Rules
+
+### Rule 1: Delivery talks only to use cases
+- HTTP/CLI layers call use cases from `internal/hysteria/app`.
+- Delivery must not call infra adapters directly.
+
+### Rule 2: Use cases depend on ports, not implementations
+- In `app/`, define interfaces for repositories/adapters.
+- Infra implements these interfaces.
+- Wiring happens in `internal/di` via Wire.
+
+### Rule 3: Domain stays pure
+- `domain/` contains business entities and domain errors only.
+- No I/O, no framework code, no direct OS/process calls.
+
+### Rule 4: Infra owns side effects
+- File I/O, YAML parsing, process execution, and service restarts live in `infra/`.
+- Keep infra details out of use cases and delivery.
+
+### Rule 5: DI and composition
+- `cmd/server` and `cmd/cli` load config and request dependencies from `internal/di`.
+- Do not instantiate infra dependencies directly inside handlers or command handlers.
+
+## Orchestrators Policy
+- This repo currently has one domain, so orchestrators are not required.
+- If a second domain appears and cross-domain workflows are introduced, add:
+  - `internal/orchestrators/{name}/...`
+  - Orchestrators may call use cases from multiple domains, but never repositories directly.
+
+## Anti-patterns to Avoid
+1. Calling repositories from HTTP handlers or CLI command handlers
+2. Importing infra packages into domain
+3. Putting OS/service-manager logic into use cases
+4. Creating wide, god-like use cases; keep use cases focused by operation

@@ -1,0 +1,19 @@
+# listen: :443
+
+acme:
+    domains:
+        - v1.fr.lerner.dev
+    email: lerner1796@gmail.com
+auth:
+    type: "userpass"
+    userpass:
+        tester: "123"
+masquerade:
+    type: proxy
+    proxy:
+        url: https://news.ycombinator.com/
+        rewriteHost: true
+obfs:
+    type: salamander
+    salamander:
+        password: "3211"

@@ -1,0 +1,33 @@
+# Main override file for hysteria_init.yml
+# New users can keep defaults and run init as-is.
+# Advanced users can tune variables below.
+
+# Service settings
+hysteria_service_name: hysteria-server
+hysteria_enable_service: true
+hysteria_start_service: true
+hysteria_restart_on_config_change: true
+
+# Installation settings
+hysteria_install_force: false
+hysteria_install_script: "curl -fsSL https://get.hy2.sh/ | bash"
+hysteria_binary_check_cmd: "hysteria version"
+
+# Package prerequisites
+hysteria_required_packages:
+  - curl
+  - ca-certificates
+  - bash
+  - tar
+
+# Config paths
+hysteria_config_src: "{{ playbook_dir }}/../config.yaml"
+hysteria_config_dir: /etc/hysteria
+hysteria_config_dest: /etc/hysteria/config.yaml
+hysteria_config_owner: root
+hysteria_config_group: root
+hysteria_config_mode: "0600"
+
+# System user/group for install script (optional, script-dependent)
+# hysteria_system_user: hysteria
+# hysteria_system_group: hysteria

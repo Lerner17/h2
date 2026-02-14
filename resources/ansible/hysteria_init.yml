@@ -1,0 +1,64 @@
+---
+- name: Bootstrap Hysteria 2 server
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - vars.yaml
+
+  handlers:
+    - name: restart hysteria
+      ansible.builtin.systemd:
+        name: "{{ hysteria_service_name }}"
+        state: restarted
+        daemon_reload: true
+      when: hysteria_restart_on_config_change | bool
+
+  tasks:
+    - name: Ensure Linux target
+      ansible.builtin.assert:
+        that:
+          - ansible_system == "Linux"
+        fail_msg: "This playbook currently supports Linux hosts only"
+
+    - name: Ensure required packages are installed
+      ansible.builtin.package:
+        name: "{{ hysteria_required_packages }}"
+        state: present
+
+    - name: Check if Hysteria is already installed
+      ansible.builtin.command: "{{ hysteria_binary_check_cmd }}"
+      register: hysteria_version
+      changed_when: false
+      failed_when: false
+
+    - name: Install Hysteria when missing or forced
+      ansible.builtin.shell: |
+        set -euo pipefail
+        {{ hysteria_install_script }}
+      args:
+        executable: /bin/bash
+      when: (hysteria_version.rc != 0) or (hysteria_install_force | bool)
+
+    - name: Ensure hysteria config directory exists
+      ansible.builtin.file:
+        path: "{{ hysteria_config_dir }}"
+        state: directory
+        owner: "{{ hysteria_config_owner }}"
+        group: "{{ hysteria_config_group }}"
+        mode: "0755"
+
+    - name: Upload hysteria config
+      ansible.builtin.copy:
+        src: "{{ hysteria_config_src }}"
+        dest: "{{ hysteria_config_dest }}"
+        owner: "{{ hysteria_config_owner }}"
+        group: "{{ hysteria_config_group }}"
+        mode: "{{ hysteria_config_mode }}"
+      notify: restart hysteria
+
+    - name: Ensure hysteria service is enabled and started
+      ansible.builtin.systemd:
+        name: "{{ hysteria_service_name }}"
+        enabled: "{{ hysteria_enable_service | bool }}"
+        state: "{{ 'started' if (hysteria_start_service | bool) else 'stopped' }}"
+        daemon_reload: true
