@@ -160,6 +160,10 @@ func extractOnlineUsers(payload any) map[string]bool {
 				out[username] = b
 				continue
 			}
+			if n, ok := toUint64(raw); ok {
+				out[username] = n > 0
+				continue
+			}
 			if _, ok := raw.(map[string]any); ok {
 				out[username] = true
 			}

@@ -25,3 +25,18 @@ func TestExtractOnlineUsers(t *testing.T) {
 		t.Fatalf("unexpected online parse: %+v", online)
 	}
 }
+
+func TestExtractOnlineUsersFromCountMap(t *testing.T) {
+	payload := map[string]any{
+		"alice": json.Number("1"),
+		"bob":   json.Number("0"),
+	}
+
+	online := extractOnlineUsers(payload)
+	if !online["alice"] {
+		t.Fatalf("alice should be online: %+v", online)
+	}
+	if online["bob"] {
+		t.Fatalf("bob should be offline: %+v", online)
+	}
+}
