@@ -3,10 +3,11 @@ SHELL := /bin/bash
 GO ?= go
 BIN_DIR ?= bin
 CLI_BIN ?= vpn-cli
+TUI_BIN ?= vpn-tui
 PREFIX ?= /usr/local
 INSTALL ?= install
 
-.PHONY: help deps deps-go deps-tools deps-system build build-cli test run-cli wire install-cli uninstall-cli clean
+.PHONY: help deps deps-go deps-tools deps-system build build-cli build-tui test run-cli run-tui wire install-cli install-tui uninstall-cli uninstall-tui clean
 
 help:
 	@echo "Available targets:"
@@ -14,10 +15,12 @@ help:
 	@echo "  make deps-go        Download go modules"
 	@echo "  make deps-tools     Install go dev tools (wire)"
 	@echo "  make deps-system    Install ansible + qrencode via package manager"
-	@echo "  make build          Build cli binary"
+	@echo "  make build          Build cli and tui binaries"
 	@echo "  make test           Run all tests"
 	@echo "  make install-cli    Install cli globally (default: /usr/local/bin/$(CLI_BIN))"
+	@echo "  make install-tui    Install tui globally (default: /usr/local/bin/$(TUI_BIN))"
 	@echo "  make uninstall-cli  Remove global cli binary"
+	@echo "  make uninstall-tui  Remove global tui binary"
 
 deps: deps-go deps-tools deps-system
 
@@ -54,17 +57,24 @@ deps-system:
 		exit 1; \
 	fi
 
-build: build-cli
+build: build-cli build-tui
 
 build-cli:
 	@mkdir -p $(BIN_DIR)
 	$(GO) build -o $(BIN_DIR)/$(CLI_BIN) ./cmd/cli
+
+build-tui:
+	@mkdir -p $(BIN_DIR)
+	$(GO) build -o $(BIN_DIR)/$(TUI_BIN) ./cmd/tui
 
 test:
 	$(GO) test ./...
 
 run-cli:
 	$(GO) run ./cmd/cli
+
+run-tui:
+	$(GO) run ./cmd/tui
 
 wire:
 	$(GO) generate ./internal/hysteria/app/...
@@ -74,9 +84,18 @@ install-cli: build-cli
 	$(INSTALL) -m 0755 $(BIN_DIR)/$(CLI_BIN) $(PREFIX)/bin/$(CLI_BIN)
 	@echo "Installed: $(PREFIX)/bin/$(CLI_BIN)"
 
+install-tui: build-tui
+	$(INSTALL) -d $(PREFIX)/bin
+	$(INSTALL) -m 0755 $(BIN_DIR)/$(TUI_BIN) $(PREFIX)/bin/$(TUI_BIN)
+	@echo "Installed: $(PREFIX)/bin/$(TUI_BIN)"
+
 uninstall-cli:
 	rm -f $(PREFIX)/bin/$(CLI_BIN)
 	@echo "Removed: $(PREFIX)/bin/$(CLI_BIN)"
+
+uninstall-tui:
+	rm -f $(PREFIX)/bin/$(TUI_BIN)
+	@echo "Removed: $(PREFIX)/bin/$(TUI_BIN)"
 
 clean:
 	rm -rf $(BIN_DIR)

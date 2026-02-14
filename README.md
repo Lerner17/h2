@@ -16,6 +16,12 @@ CLI-утилита на Go для управления пользователя�
 go run ./cmd/cli --help
 ```
 
+## Запуск TUI
+
+```bash
+go run ./cmd/tui
+```
+
 ## Makefile
 
 ```bash
@@ -27,6 +33,7 @@ sudo make install-cli
 
 CLI будет установлен как:
 - `/usr/local/bin/vpn-cli`
+- `/usr/local/bin/vpn-tui`
 
 ## CLI
 
