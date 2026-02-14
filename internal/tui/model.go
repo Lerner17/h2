@@ -6,6 +6,7 @@ import (
 
 	"vpn/internal/hysteria/app/add_user"
 	"vpn/internal/hysteria/app/get_connection_url"
+	"vpn/internal/hysteria/app/get_user_stats"
 	"vpn/internal/hysteria/app/list_users"
 	"vpn/internal/hysteria/app/remove_user"
 	"vpn/internal/hysteria/app/rotate_password"
@@ -32,6 +33,7 @@ const (
 
 type usersLoadedMsg struct {
 	users []string
+	stats map[string]get_user_stats.UserStats
 	err   error
 }
 
@@ -68,11 +70,13 @@ type model struct {
 	rotateUC     *rotate_password.UseCase
 	removeUC     *remove_user.UseCase
 	listUC       *list_users.UseCase
+	statsUC      *get_user_stats.UseCase
 	connectionUC *get_connection_url.UseCase
 
 	users       []string
 	usersCursor int
 	loading     bool
+	userStats   map[string]get_user_stats.UserStats
 
 	selectedUser  string
 	actions       []string
@@ -104,8 +108,10 @@ func newModel(deps *Dependencies) model {
 		rotateUC:     deps.RotatePassword,
 		removeUC:     deps.RemoveUser,
 		listUC:       deps.ListUsers,
+		statsUC:      deps.UserStats,
 		connectionUC: deps.Connection,
 		loading:      true,
+		userStats:    map[string]get_user_stats.UserStats{},
 		actions: []string{
 			"Rotate password",
 			"Remove user",

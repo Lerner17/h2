@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func (m model) Init() tea.Cmd { return loadUsersCmd(m.listUC) }
+func (m model) Init() tea.Cmd { return loadUsersCmd(m.listUC, m.statsUC) }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -24,6 +24,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.users = msg.users
+		m.userStats = msg.stats
 		if m.usersCursor >= len(m.users) {
 			m.usersCursor = max(0, len(m.users)-1)
 		}
@@ -56,7 +57,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = stateResult
 		if msg.refresh {
 			m.loading = true
-			return m, loadUsersCmd(m.listUC)
+			return m, loadUsersCmd(m.listUC, m.statsUC)
 		}
 		return m, nil
 	case tea.KeyMsg:
@@ -88,7 +89,7 @@ func (m model) updateUsers(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "r", "f5":
 		m.loading = true
-		return m, loadUsersCmd(m.listUC)
+		return m, loadUsersCmd(m.listUC, m.statsUC)
 	case "up", "k":
 		if m.usersCursor > 0 {
 			m.usersCursor--

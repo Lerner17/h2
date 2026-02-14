@@ -15,10 +15,14 @@ const (
 )
 
 type Config struct {
-	HysteriaConfigPath     string `yaml:"hysteria_config_path"`
-	HysteriaServiceName    string `yaml:"hysteria_service_name"`
-	HysteriaRestartEnabled bool   `yaml:"hysteria_restart_enabled"`
-	HysteriaRestartCommand string `yaml:"hysteria_restart_command"`
+	HysteriaConfigPath                 string `yaml:"hysteria_config_path"`
+	HysteriaServiceName                string `yaml:"hysteria_service_name"`
+	HysteriaRestartEnabled             bool   `yaml:"hysteria_restart_enabled"`
+	HysteriaRestartCommand             string `yaml:"hysteria_restart_command"`
+	HysteriaTrafficStatsEnabled        bool   `yaml:"hysteria_traffic_stats_enabled"`
+	HysteriaTrafficStatsURL            string `yaml:"hysteria_traffic_stats_url"`
+	HysteriaTrafficStatsSecret         string `yaml:"hysteria_traffic_stats_secret"`
+	HysteriaTrafficStatsTimeoutSeconds int    `yaml:"hysteria_traffic_stats_timeout_seconds"`
 }
 
 type CLILoadResult struct {
@@ -63,10 +67,14 @@ func LoadCLI() (CLILoadResult, error) {
 
 func defaultConfig() Config {
 	return Config{
-		HysteriaConfigPath:     "/etc/hysteria/config.yaml",
-		HysteriaServiceName:    "hysteria-server",
-		HysteriaRestartEnabled: true,
-		HysteriaRestartCommand: "",
+		HysteriaConfigPath:                 "/etc/hysteria/config.yaml",
+		HysteriaServiceName:                "hysteria-server",
+		HysteriaRestartEnabled:             true,
+		HysteriaRestartCommand:             "",
+		HysteriaTrafficStatsEnabled:        false,
+		HysteriaTrafficStatsURL:            "http://127.0.0.1:9999",
+		HysteriaTrafficStatsSecret:         "",
+		HysteriaTrafficStatsTimeoutSeconds: 2,
 	}
 }
 
@@ -149,6 +157,26 @@ func applyEnvOverrides(cfg *Config) error {
 			return fmt.Errorf("parse HYSTERIA_RESTART_ENABLED: %w", err)
 		}
 		cfg.HysteriaRestartEnabled = parsed
+	}
+	if v, ok := os.LookupEnv("HYSTERIA_TRAFFIC_STATS_ENABLED"); ok {
+		parsed, err := strconv.ParseBool(v)
+		if err != nil {
+			return fmt.Errorf("parse HYSTERIA_TRAFFIC_STATS_ENABLED: %w", err)
+		}
+		cfg.HysteriaTrafficStatsEnabled = parsed
+	}
+	if v, ok := os.LookupEnv("HYSTERIA_TRAFFIC_STATS_URL"); ok {
+		cfg.HysteriaTrafficStatsURL = v
+	}
+	if v, ok := os.LookupEnv("HYSTERIA_TRAFFIC_STATS_SECRET"); ok {
+		cfg.HysteriaTrafficStatsSecret = v
+	}
+	if v, ok := os.LookupEnv("HYSTERIA_TRAFFIC_STATS_TIMEOUT_SECONDS"); ok {
+		parsed, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("parse HYSTERIA_TRAFFIC_STATS_TIMEOUT_SECONDS: %w", err)
+		}
+		cfg.HysteriaTrafficStatsTimeoutSeconds = parsed
 	}
 	return nil
 }

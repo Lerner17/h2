@@ -53,9 +53,10 @@ func (m model) renderHeader() string {
 	}
 	usersCount := len(m.users)
 	meter := renderMeter(m.styles, usersCount)
+	onlineCount, totalRx, totalTx := m.aggregateStats()
 
 	line1 := m.styles.header.Render("HY2-CTL") + " " + m.styles.headerDim.Render("mode=") + m.styles.header.Render(mode)
-	line2 := m.styles.headerDim.Render("users") + " " + meter + "  " + m.styles.headerDim.Render(fmt.Sprintf("count=%d", usersCount))
+	line2 := m.styles.headerDim.Render("users") + " " + meter + "  " + m.styles.headerDim.Render(fmt.Sprintf("count=%d online=%d rx=%s tx=%s", usersCount, onlineCount, formatBytes(totalRx), formatBytes(totalTx)))
 	line3 := m.styles.headerDim.Render("a:add  f2:add  f5:refresh  enter/f6:actions  f10:quit")
 	return lipgloss.JoinVertical(lipgloss.Left, line1, line2, line3)
 }
@@ -72,17 +73,35 @@ func (m model) renderUsers() string {
 	if m.loading {
 		return m.styles.panel.Copy().Width(panelWidth).Render("Loading users...")
 	}
-	idxW := 5
-	stateW := 10
-	userW := max(8, panelWidth-idxW-stateW-6)
-	head := m.styles.tableHead.Render(fmt.Sprintf("%-*s %-*s %-*s", idxW, "IDX", userW, "USER", stateW, "STATE"))
+	idxW := 4
+	onlineW := 7
+	rxW := 9
+	txW := 9
+	totalW := 9
+	userW := max(8, panelWidth-idxW-onlineW-rxW-txW-totalW-10)
+	head := m.styles.tableHead.Render(
+		fmt.Sprintf("%-*s %-*s %-*s %-*s %-*s %-*s", idxW, "ID", userW, "USER", onlineW, "ONLINE", rxW, "RX", txW, "TX", totalW, "TOTAL"),
+	)
 	rows := []string{head}
 
 	if len(m.users) == 0 {
 		rows = append(rows, m.styles.muted.Render("-- no users --  (press F2 or A to add)"))
 	} else {
 		for i, u := range m.users {
-			line := fmt.Sprintf("%-*d %-*s %-*s", idxW, i+1, userW, truncate(u, userW), stateW, "active")
+			stat := m.userStats[u]
+			online := "no"
+			if stat.Online {
+				online = "yes"
+			}
+			line := fmt.Sprintf(
+				"%-*d %-*s %-*s %-*s %-*s %-*s",
+				idxW, i+1,
+				userW, truncate(u, userW),
+				onlineW, online,
+				rxW, formatBytes(stat.RxBytes),
+				txW, formatBytes(stat.TxBytes),
+				totalW, formatBytes(stat.TotalBytes),
+			)
 			if i == m.usersCursor {
 				rows = append(rows, m.styles.rowActive.Render(line))
 			} else {

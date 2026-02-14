@@ -9,15 +9,23 @@ import (
 
 	"vpn/internal/hysteria/app/add_user"
 	"vpn/internal/hysteria/app/get_connection_url"
+	"vpn/internal/hysteria/app/get_user_stats"
 	"vpn/internal/hysteria/app/list_users"
 	"vpn/internal/hysteria/app/remove_user"
 	"vpn/internal/hysteria/app/rotate_password"
 )
 
-func loadUsersCmd(uc *list_users.UseCase) tea.Cmd {
+func loadUsersCmd(listUC *list_users.UseCase, statsUC *get_user_stats.UseCase) tea.Cmd {
 	return func() tea.Msg {
-		users, err := uc.Execute(context.Background())
-		return usersLoadedMsg{users: users, err: err}
+		users, err := listUC.Execute(context.Background())
+		if err != nil {
+			return usersLoadedMsg{users: nil, stats: nil, err: err}
+		}
+		stats := map[string]get_user_stats.UserStats{}
+		if statsUC != nil {
+			stats, _ = statsUC.Execute(context.Background(), users)
+		}
+		return usersLoadedMsg{users: users, stats: stats, err: nil}
 	}
 }
 

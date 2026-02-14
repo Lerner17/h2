@@ -6,6 +6,7 @@ import (
 	appconfig "vpn/internal/config"
 	"vpn/internal/hysteria/app/add_user"
 	"vpn/internal/hysteria/app/get_connection_url"
+	"vpn/internal/hysteria/app/get_user_stats"
 	"vpn/internal/hysteria/app/list_users"
 	"vpn/internal/hysteria/app/remove_user"
 	"vpn/internal/hysteria/app/rotate_password"
@@ -16,6 +17,7 @@ type Dependencies struct {
 	RotatePassword *rotate_password.UseCase
 	RemoveUser     *remove_user.UseCase
 	ListUsers      *list_users.UseCase
+	UserStats      *get_user_stats.UseCase
 	Connection     *get_connection_url.UseCase
 }
 
@@ -44,12 +46,17 @@ func BuildDependencies(cfg appconfig.Config) (*Dependencies, error) {
 	if err != nil {
 		return nil, fmt.Errorf("build connection usecase: %w", err)
 	}
+	userStatsUC, err := get_user_stats.BuildUseCase(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("build user-stats usecase: %w", err)
+	}
 
 	return &Dependencies{
 		AddUser:        addUC,
 		RotatePassword: rotateUC,
 		RemoveUser:     removeUC,
 		ListUsers:      listUC,
+		UserStats:      userStatsUC,
 		Connection:     connectionUC,
 	}, nil
 }
